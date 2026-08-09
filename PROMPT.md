@@ -2,6 +2,8 @@
 
 Everything on this page is what actually produced the PHONEX ULTRA footage —
 copied verbatim from the working pipeline, with nothing server-side attached.
+The resulting film itself is committed at [`media/film.mp4`](media/film.mp4),
+so every step below can be reproduced or skipped.
 
 ## 1. The video prompt (verbatim)
 
