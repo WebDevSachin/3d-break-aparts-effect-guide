@@ -52,7 +52,10 @@ ScrollTrigger.create({
   invalidateOnRefresh: true,
   onUpdate: (self) => {
     setProgress(self.progress);
-    topbarEl.classList.toggle('topbar--scrolled', self.scroll() > 80);
+    /* Reduced-motion keeps the solid topbar unconditionally — without the
+       REDUCED short-circuit this toggle would strip the class again on the
+       first scroll event above the 80px threshold. */
+    topbarEl.classList.toggle('topbar--scrolled', REDUCED || self.scroll() > 80);
   },
 });
 if (REDUCED) topbarEl.classList.add('topbar--scrolled');
@@ -156,14 +159,17 @@ const SLOTS = {
     back:    { x: 30.5,  y: 0 },
   },
   mobile: {
+    /* Strict left/right zigzag with a 16vh same-column step: a phone layer
+       is ~21vh tall here, so 16vh keeps the cascading-overlap look without
+       any two same-column parts interpenetrating. */
     glass:   { x: -9,  y: -28 },
     oled:    { x: 9,   y: -20 },
     vapor:   { x: -9,  y: -12 },
     board:   { x: 9,   y: -4 },
-    camera:  { x: -13, y: 0 },
-    battery: { x: 9,   y: 4 },
-    frame:   { x: -9,  y: 12 },
-    back:    { x: 9,   y: 20 },
+    camera:  { x: -13, y: 4 },
+    battery: { x: 9,   y: 12 },
+    frame:   { x: -9,  y: 20 },
+    back:    { x: 9,   y: 28 },
   },
 };
 

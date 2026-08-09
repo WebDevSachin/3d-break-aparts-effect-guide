@@ -44,7 +44,7 @@ background. Everything downstream is derived from it.
 
 **Step 2 — generate the exploded-view film.** Send the photo to an
 image-to-video model (Veo 3.1-class) as the clip's **first frame**, with the
-prompt in [`PROMPT.md`](PROMPT.md): 8 seconds, 720p, 16:9, no audio. The model
+prompt in [`PROMPT.md`](PROMPT.md): 10 seconds, 720p, 16:9, no audio. The model
 returns a continuous shot of the product tumbling, separating into layers,
 holding, and reassembling. This repo's take is committed at
 [`media/film.mp4`](media/film.mp4).
@@ -205,7 +205,8 @@ pixels catch what assertions can't.
    Update `FRAME_COUNT` in `site/main.js` if you extracted fewer than 120.
 3. Edit the copy in `site/index.html` (beats, blueprint list, specs) and, if
    you like, redraw the eight teardown SVG layers for your product — each is a
-   small inline SVG (300×640 viewBox), flat-shaded with 2–3 gradients.
+   small inline SVG (300×640 viewBox; the square camera module is 220×220),
+   flat-shaded with 2–3 gradients.
 4. Re-time the film's copy beats to *your* footage: scrub slowly, note the
    fractions where story moments happen, and move the `0.24 / 0.45 / 0.65 /
    0.88` positions in `site/main.js` to match.

@@ -46,8 +46,10 @@ async function makePage(context) {
   return page;
 }
 
-/* Scroll by real wheel-ish steps so Lenis + ScrollTrigger run exactly the
-   code a user runs; a plain scrollTo teleport can skip pinned states. */
+/* Teleport to the target scroll position, then wait out the scrub.
+   ScrollTrigger tracks the native scroll position, so a scrollTo jump still
+   lands inside pinned ranges; the 1400ms pause lets the scrub: 1 smoothing
+   catch up so the screenshot shows the settled state, not the jump. */
 async function settleAt(page, fraction) {
   await page.evaluate(async (f) => {
     const max = document.documentElement.scrollHeight - window.innerHeight;

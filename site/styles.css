@@ -185,6 +185,8 @@ section[id], footer[id], main[id] { scroll-margin-top: 72px; }
 /* A keyboard user tabbing to the end-card CTA reveals the whole card */
 .beat--end:focus-within { opacity: 1 !important; }
 html.no-js #beat1, html.no-js #beat2, html.no-js #beat3, html.no-js #beatEnd { opacity: 1; position: relative; inset: auto; margin: 48px auto; }
+/* Flowed copy in the static page must accept selection/clicks again */
+html.no-js .beat, html.reduced-motion .beat { pointer-events: auto; }
 /* No-JS: the film section becomes a static poster + flowed copy. The title
    is pinned to the poster's 100vh only, so it never overlaps flowed beats. */
 html.no-js .film { height: auto; overflow: visible; }
@@ -358,7 +360,9 @@ html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
     background:
       linear-gradient(180deg, rgba(10,12,16,.55) 0%, rgba(10,12,16,0) 20%, rgba(10,12,16,0) 50%, rgba(10,12,16,.8) 100%);
   }
-  .beat { max-width: min(78vw, 340px); }
+  /* Width cap applies to the side beats only — the title and end card are
+     centered full-width blocks and must keep max-width: none */
+  .beat--left, .beat--right { max-width: min(78vw, 340px); }
   .beat--left  { top: auto; bottom: 10vh; padding-bottom: 24px; }
   .beat--right {
     top: auto; bottom: 10vh; padding-bottom: 24px; text-align: left; align-items: flex-start;
@@ -395,12 +399,13 @@ html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
   .film__canvas, .film__loader { display: none; }
   .film__poster { position: relative; height: 100vh; }
 
-  .beat, #beat1, #beat2, #beat3, #beatEnd { opacity: 1; visibility: visible; }
+  /* Beats are ordinary flowed copy here, so pointer events come back on
+     (selecting/clicking text must work in the static page) */
+  .beat, #beat1, #beat2, #beat3, #beatEnd { opacity: 1; visibility: visible; pointer-events: auto; }
   .beat--left, .beat--right, .beat--end {
     position: relative; inset: auto; transform: none; text-align: left;
     max-width: 640px; margin: 48px auto; padding: 0 24px;
   }
-  .beat--title { position: absolute; inset: 0; }
   .scroll-cue { display: none; }
 
   /* Teardown: static spread is impossible without JS positioning, so show
