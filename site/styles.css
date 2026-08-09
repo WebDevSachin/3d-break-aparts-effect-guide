@@ -1,0 +1,419 @@
+/* ============================================================
+   PHONEX ULTRA — exploded-effect scrollytelling
+   Dark premium product page. Animation is GSAP-driven (main.js);
+   this file owns layout, type, and static states.
+   ============================================================ */
+
+:root {
+  --bg: #0a0c10;          /* page base */
+  --bg-raised: #12151c;   /* cards, panels */
+  --ink: #f2f4f8;         /* primary text on dark */
+  --ink-dim: #9aa3b2;     /* secondary text on dark */
+  --hairline: #262b34;
+  --accent: #61b3ff;      /* glow blue */
+  --copper: #d08a56;      /* vapor-chamber copper */
+  --light-bg: #eef0f3;    /* blueprint section */
+  --light-ink: #14161b;
+  --light-dim: #555c68;
+
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+/* ---------- Reset & base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Hide the scrollbar only for the smooth-scroll (Lenis) experience;
+   reduced-motion and no-JS users keep the native scrollbar. */
+html:not(.no-js):not(.reduced-motion) { scrollbar-width: none; }
+html:not(.no-js):not(.reduced-motion)::-webkit-scrollbar { display: none; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg, canvas { display: block; max-width: 100%; }
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; }
+
+a { color: inherit; text-decoration: none; }
+
+/* Anchor targets clear the 64px fixed topbar on native fragment jumps too */
+section[id], footer[id], main[id] { scroll-margin-top: 72px; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+.skip-link {
+  position: fixed; top: 12px; left: 16px; z-index: 200;
+  background: var(--accent); color: #04121f; font-weight: 600;
+  padding: 10px 18px; border-radius: 999px;
+  transform: translateY(-72px); transition: transform .2s;
+}
+.skip-link:focus { transform: translateY(0); }
+
+.eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.eyebrow--dark { color: #1f5da8; }
+
+/* ============================================================
+   Chrome — top bar + scroll progress
+   ============================================================ */
+.topbar {
+  position: fixed; inset: 0 0 auto 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 48px); height: 64px;
+  background: transparent;
+  transition: background .35s ease, backdrop-filter .35s ease, border-color .35s ease;
+  border-bottom: 1px solid transparent;
+}
+.topbar--scrolled, html.no-js .topbar {
+  background: rgba(10, 12, 16, 0.72);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-bottom-color: var(--hairline);
+}
+.topbar__brand {
+  font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: 0.12em;
+  display: flex; align-items: center; gap: 8px;
+}
+.topbar__badge {
+  font-size: 10px; letter-spacing: 0.18em; padding: 3px 8px; border-radius: 4px;
+  background: var(--accent); color: #04121f;
+}
+.topbar__nav { display: flex; gap: clamp(14px, 2.5vw, 32px); }
+.topbar__nav a { font-size: 14px; font-weight: 500; color: var(--ink-dim); transition: color .2s; }
+.topbar__nav a:hover { color: var(--ink); }
+
+.cta-pill {
+  font-size: 14px; font-weight: 600; color: var(--ink);
+  border: 1px solid #3a4250; border-radius: 999px; padding: 9px 20px;
+  transition: border-color .25s, background .25s, transform .25s;
+}
+.cta-pill:hover { border-color: var(--accent); background: rgba(97, 179, 255, 0.1); }
+.cta-pill--big { font-size: 16px; padding: 14px 32px; border-color: var(--accent); background: rgba(97, 179, 255, 0.12); }
+.cta-pill--big:hover { background: rgba(97, 179, 255, 0.22); transform: translateY(-2px); }
+
+.progress {
+  position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 110; pointer-events: none;
+}
+.progress__fill {
+  display: block; height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--copper));
+  transform: scaleX(0); transform-origin: left center;
+}
+
+/* ============================================================
+   S1 · Film — scroll-scrubbed image sequence
+   ============================================================ */
+.film { position: relative; height: 100vh; overflow: hidden; }
+
+.film__poster,
+.film__canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+.film__poster { z-index: 1; }
+.film__canvas { z-index: 2; opacity: 0; }        /* JS fades it in once frames are ready */
+
+.film__shade {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(10,12,16,.55) 0%, rgba(10,12,16,0) 22%, rgba(10,12,16,0) 72%, rgba(10,12,16,.65) 100%);
+}
+
+.film__loader {
+  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+  width: 120px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.14);
+  z-index: 6; overflow: hidden;
+}
+.film__loader-bar {
+  display: block; height: 100%; width: 100%; background: var(--accent);
+  transform: scaleX(0); transform-origin: left center;
+}
+
+/* Copy beats over the film */
+.beat { position: absolute; z-index: 5; max-width: 460px; }
+.beat h2 { font-size: clamp(28px, 3.6vw, 52px); margin-bottom: 12px; text-shadow: 0 2px 24px rgba(5, 7, 10, 0.85); }
+.beat p { color: #b6bfcc; font-size: clamp(15px, 1.2vw, 18px); text-shadow: 0 1px 14px rgba(5, 7, 10, 0.9); }
+
+.beat--title {
+  inset: 0; max-width: none; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+/* Center scrim so the title holds over the bright phone body */
+.beat--title::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(58% 54% at 50% 46%, rgba(8, 10, 14, 0.55), rgba(8, 10, 14, 0) 74%);
+}
+.beat--title > * { position: relative; }
+.beat__display {
+  font-size: clamp(56px, 11vw, 168px); line-height: 0.92; letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #ffffff 30%, #93a1b8 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.beat__sub { margin-top: 18px; color: var(--ink-dim); font-size: clamp(15px, 1.4vw, 20px); }
+
+/* Vertical centering via flex (not transform) — GSAP owns transforms on these */
+.beat--left, .beat--right {
+  top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center;
+  padding: 0 36px;
+}
+.beat--left  { left: clamp(0px, 5vw, 80px); background: linear-gradient(90deg, rgba(8, 10, 14, 0.55), rgba(8, 10, 14, 0)); }
+.beat--right {
+  right: clamp(0px, 5vw, 80px); text-align: right; align-items: flex-end;
+  background: linear-gradient(270deg, rgba(8, 10, 14, 0.55), rgba(8, 10, 14, 0));
+}
+.beat--end {
+  inset: 0; max-width: none; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; text-align: center;
+  padding-bottom: clamp(48px, 10vh, 120px);
+}
+.beat--end h2 { margin-bottom: 24px; }
+
+/* Beats start transparent; GSAP scrubs opacity only, so the copy stays in
+   the accessibility tree at all times. Pointer events are off while the
+   beats float over the film; the end-card CTA re-enables its own. */
+#beat1, #beat2, #beat3, #beatEnd { opacity: 0; }
+.beat { pointer-events: none; }
+.beat--end .cta-pill { pointer-events: auto; }
+/* A keyboard user tabbing to the end-card CTA reveals the whole card */
+.beat--end:focus-within { opacity: 1 !important; }
+html.no-js #beat1, html.no-js #beat2, html.no-js #beat3, html.no-js #beatEnd { opacity: 1; position: relative; inset: auto; margin: 48px auto; }
+/* No-JS: the film section becomes a static poster + flowed copy. The title
+   is pinned to the poster's 100vh only, so it never overlaps flowed beats. */
+html.no-js .film { height: auto; overflow: visible; }
+html.no-js .film__canvas, html.no-js .film__loader { display: none; }
+html.no-js .film__poster { position: relative; height: 100vh; }
+html.no-js .beat--title { position: absolute; inset: 0 0 auto 0; height: 100vh; }
+html.no-js .beat--left, html.no-js .beat--right, html.no-js .beat--end {
+  align-items: flex-start; text-align: left; padding: 0 24px;
+}
+
+.scroll-cue {
+  margin-top: 42px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--ink-dim); font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+}
+.scroll-cue i {
+  width: 1px; height: 44px; background: linear-gradient(180deg, var(--accent), transparent);
+}
+
+/* ============================================================
+   S2 · Exploded view — layered vector teardown
+   ============================================================ */
+.explode {
+  position: relative; height: 100vh; overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 110%, rgba(97,179,255,0.07), transparent 60%),
+    var(--bg);
+}
+/* Centered via auto margins, not transform — GSAP tweens y on this element */
+.explode__head {
+  position: absolute; top: clamp(76px, 12vh, 120px); left: 0; right: 0;
+  width: fit-content; margin-inline: auto;
+  text-align: center; z-index: 10;
+}
+.explode__head h2 { font-size: clamp(30px, 4vw, 56px); }
+
+.explode__stage {
+  position: absolute; inset: 0;
+  perspective: 1600px;
+}
+
+/* Each layer is centered, then GSAP fans it out to its slot */
+.layer {
+  position: absolute; left: 50%; top: 50%;
+  width: clamp(96px, 11vw, 168px);
+  margin-left: calc(clamp(96px, 11vw, 168px) / -2);
+  aspect-ratio: 300 / 640;
+  margin-top: calc(clamp(96px, 11vw, 168px) * 640 / 300 / -2);
+}
+.layer svg { width: 100%; height: 100%; filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.55)); }
+
+.layer--cam {
+  aspect-ratio: 1 / 1;
+  width: clamp(64px, 7.4vw, 112px);
+  margin-left: calc(clamp(64px, 7.4vw, 112px) / -2);
+  margin-top: calc(clamp(64px, 7.4vw, 112px) / -2);
+}
+
+/* Layer labels — hairline connector + name */
+.llabel {
+  position: absolute; left: 50%; top: 50%; z-index: 9;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  width: 150px; margin-left: -75px;
+  opacity: 0;                                   /* GSAP reveals */
+}
+.llabel i { width: 1px; height: 34px; background: #3d4553; }
+.llabel b { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; margin-top: 8px; }
+.llabel span { font-size: 11.5px; color: var(--ink-dim); margin-top: 2px; }
+.llabel--above { flex-direction: column-reverse; }
+.llabel--above i { margin-top: 8px; }
+.llabel--above b { margin-top: 0; }
+
+/* ============================================================
+   S3 · Blueprint (light interlude)
+   ============================================================ */
+.blueprint {
+  background: var(--light-bg); color: var(--light-ink);
+  padding: clamp(72px, 12vh, 140px) clamp(20px, 6vw, 96px);
+}
+.blueprint__head { max-width: 720px; margin: 0 auto; text-align: center; }
+.blueprint__head h2 { font-size: clamp(30px, 4vw, 56px); }
+
+.blueprint__figure { max-width: 860px; margin: clamp(36px, 6vh, 64px) auto 0; }
+.blueprint__figure img {
+  width: 100%; height: auto; border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(20, 22, 27, 0.18);
+}
+
+.blueprint__list {
+  list-style: none; max-width: 1080px;
+  margin: clamp(40px, 7vh, 72px) auto 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px 32px;
+}
+.blueprint__list li { border-top: 1px solid #d3d7dd; padding-top: 14px; }
+.blueprint__list b { font-family: var(--font-display); font-size: 15px; display: block; margin-bottom: 4px; }
+.blueprint__list span { font-size: 13.5px; color: var(--light-dim); line-height: 1.5; display: block; }
+
+/* ============================================================
+   S4 · Feature split rows
+   ============================================================ */
+.features { padding: clamp(72px, 12vh, 140px) clamp(20px, 6vw, 96px); display: grid; gap: clamp(48px, 8vh, 96px); }
+
+.feature {
+  display: grid; grid-template-columns: 1.15fr 1fr; align-items: center;
+  gap: clamp(28px, 5vw, 72px); max-width: 1180px; margin: 0 auto;
+}
+.feature--flip .feature__media { order: 2; }
+.feature--flip .feature__copy { order: 1; }
+
+.feature__media { border-radius: 20px; overflow: hidden; background: var(--bg-raised); }
+.feature__media img { width: 100%; height: auto; transition: transform .6s cubic-bezier(.19,1,.22,1); }
+.feature:hover .feature__media img { transform: scale(1.04); }
+
+.feature__copy h3 { font-size: clamp(26px, 3vw, 42px); margin-bottom: 14px; }
+.feature__copy p:not(.eyebrow) { color: var(--ink-dim); max-width: 44ch; }
+
+/* ============================================================
+   S5 · Specs
+   ============================================================ */
+.specs { padding: clamp(72px, 12vh, 140px) clamp(20px, 6vw, 96px); }
+.specs__head { text-align: center; margin-bottom: clamp(40px, 7vh, 72px); }
+.specs__head h2 { font-size: clamp(30px, 4vw, 56px); }
+
+.specs__grid {
+  max-width: 1080px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.spec {
+  background: var(--bg-raised); border: 1px solid var(--hairline); border-radius: 16px;
+  padding: 26px 24px;
+  transition: transform .4s cubic-bezier(.19,1,.22,1), border-color .4s;
+}
+.spec:hover { transform: translateY(-6px); border-color: #3a4250; }
+.spec dt {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 10px;
+}
+.spec dd { font-family: var(--font-display); font-size: clamp(17px, 1.5vw, 21px); font-weight: 600; line-height: 1.35; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  border-top: 1px solid var(--hairline);
+  padding: clamp(56px, 10vh, 110px) clamp(20px, 6vw, 96px) 48px;
+  text-align: center; overflow: hidden;
+}
+.footer__brand {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(64px, 14vw, 220px); line-height: 0.9; letter-spacing: 0.04em;
+  color: transparent; -webkit-text-stroke: 1px #2c333f;
+  user-select: none;
+}
+.footer__note { color: var(--ink-dim); font-size: 13.5px; max-width: 62ch; margin: 28px auto 0; }
+.footer__links { display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: center; margin-top: 26px; }
+.footer__links a { font-size: 13px; color: var(--ink-dim); transition: color .2s; }
+.footer__links a:hover { color: var(--ink); }
+
+/* ============================================================
+   Scroll-reveal defaults (elements GSAP fades in once)
+   ============================================================ */
+.reveal { opacity: 0; }
+html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
+
+/* ============================================================
+   Responsive — ≤ 900px
+   ============================================================ */
+@media (max-width: 900px) {
+  .topbar__nav { display: none; }
+
+  .film__shade {
+    background:
+      linear-gradient(180deg, rgba(10,12,16,.55) 0%, rgba(10,12,16,0) 20%, rgba(10,12,16,0) 50%, rgba(10,12,16,.8) 100%);
+  }
+  .beat { max-width: min(78vw, 340px); }
+  .beat--left  { top: auto; bottom: 10vh; padding-bottom: 24px; }
+  .beat--right {
+    top: auto; bottom: 10vh; padding-bottom: 24px; text-align: left; align-items: flex-start;
+    left: clamp(0px, 5vw, 80px); right: auto;
+    background: linear-gradient(90deg, rgba(8, 10, 14, 0.55), rgba(8, 10, 14, 0));
+  }
+
+  /* Teardown fans out vertically on narrow screens */
+  .explode__head { top: 72px; }
+  .layer { width: clamp(84px, 20vw, 110px); margin-left: calc(clamp(84px, 20vw, 110px) / -2); margin-top: calc(clamp(84px, 20vw, 110px) * 640 / 300 / -2); }
+  .layer--cam { width: clamp(56px, 13vw, 72px); margin-left: calc(clamp(56px, 13vw, 72px) / -2); margin-top: calc(clamp(56px, 13vw, 72px) / -2); }
+  .llabel { width: 118px; margin-left: -59px; }
+  .llabel i { display: none; }
+  .llabel b { font-size: 11.5px; }
+  .llabel span { display: none; }
+
+  .blueprint__list { grid-template-columns: repeat(2, 1fr); }
+  .feature, .feature--flip { grid-template-columns: 1fr; }
+  .feature--flip .feature__media { order: 0; }
+  .feature--flip .feature__copy { order: 1; }
+  .specs__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .specs__grid { grid-template-columns: 1fr; }
+  .blueprint__list { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Reduced motion — no pins, no scrub; everything readable
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .film { height: auto; min-height: 100vh; }
+  .film__canvas, .film__loader { display: none; }
+  .film__poster { position: relative; height: 100vh; }
+
+  .beat, #beat1, #beat2, #beat3, #beatEnd { opacity: 1; visibility: visible; }
+  .beat--left, .beat--right, .beat--end {
+    position: relative; inset: auto; transform: none; text-align: left;
+    max-width: 640px; margin: 48px auto; padding: 0 24px;
+  }
+  .beat--title { position: absolute; inset: 0; }
+  .scroll-cue { display: none; }
+
+  /* Teardown: static spread is impossible without JS positioning, so show
+     the stacked phone; the labels would all pile up at center, so they stay
+     hidden — the blueprint list right below carries the same information. */
+  .explode { height: auto; padding: 96px 20px 120px; }
+  .explode__head { position: static; margin-bottom: 60px; }
+  .explode__stage { position: relative; height: 60vh; }
+  .llabel { display: none; }
+
+  /* Keep the title on the poster area only — the beats flow below it */
+  .beat--title { position: absolute; inset: 0 0 auto 0; height: 100vh; }
+
+  .reveal { opacity: 1; }
+  .feature__media img, .spec { transition: none; }
+}
