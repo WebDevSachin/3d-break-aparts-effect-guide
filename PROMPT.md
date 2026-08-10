@@ -2,6 +2,8 @@
 
 Everything on this page is what actually produced the PHONEX ULTRA footage —
 copied verbatim from the working pipeline, with nothing server-side attached.
+The resulting film itself is committed at [`media/film.mp4`](media/film.mp4),
+so every step below can be reproduced or skipped.
 
 ## 1. The video prompt (verbatim)
 
@@ -35,7 +37,7 @@ those ruins a scroll-scrubbed page, because the frame sequence must read as
 |---|---|---|
 | Model class | Veo 3.1 (fast) — Seedance / Sora 2-class models also work | image-to-video with first-frame control |
 | First frame | the uploaded product photo (sent inline as a data URL) | the film starts on *your* product, not the model's idea of it |
-| Duration | 8 seconds | enough for tumble → explode → hold → reassemble |
+| Duration | 10 seconds (8 s also works) | enough for tumble → explode → hold → reassemble; the committed film is 10 s |
 | Resolution | 720p | the site scrubs frames full-bleed at 1280px wide — more is wasted bytes |
 | Aspect ratio | 16:9 | landscape hero |
 | Audio | off | frames are extracted; sound would never be heard |
@@ -57,8 +59,8 @@ ffprobe -v error -select_streams v:0 \
   -show_entries stream=avg_frame_rate -show_entries format=duration \
   -of json film.mp4
 
-# 2) extract ≤120 evenly spaced 1280px-wide JPEGs (replace 8 with your duration in seconds)
-ffmpeg -y -i film.mp4 -vf "fps=120/8,scale=1280:-2" -q:v 4 \
+# 2) extract ≤120 evenly spaced 1280px-wide JPEGs (replace 10 with your duration in seconds)
+ffmpeg -y -i film.mp4 -vf "fps=120/10,scale=1280:-2" -q:v 4 \
   -frames:v 120 -start_number 0 site/assets/frames/frame_%03d.jpg
 
 # 3) the poster is the first frame (which IS the original product photo)

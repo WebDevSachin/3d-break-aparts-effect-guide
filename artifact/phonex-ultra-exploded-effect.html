@@ -258,6 +258,8 @@ section[id], footer[id], main[id] { scroll-margin-top: 72px; }
 /* A keyboard user tabbing to the end-card CTA reveals the whole card */
 .beat--end:focus-within { opacity: 1 !important; }
 html.no-js #beat1, html.no-js #beat2, html.no-js #beat3, html.no-js #beatEnd { opacity: 1; position: relative; inset: auto; margin: 48px auto; }
+/* Flowed copy in the static page must accept selection/clicks again */
+html.no-js .beat, html.reduced-motion .beat { pointer-events: auto; }
 /* No-JS: the film section becomes a static poster + flowed copy. The title
    is pinned to the poster's 100vh only, so it never overlaps flowed beats. */
 html.no-js .film { height: auto; overflow: visible; }
@@ -431,7 +433,9 @@ html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
     background:
       linear-gradient(180deg, rgba(10,12,16,.55) 0%, rgba(10,12,16,0) 20%, rgba(10,12,16,0) 50%, rgba(10,12,16,.8) 100%);
   }
-  .beat { max-width: min(78vw, 340px); }
+  /* Width cap applies to the side beats only — the title and end card are
+     centered full-width blocks and must keep max-width: none */
+  .beat--left, .beat--right { max-width: min(78vw, 340px); }
   .beat--left  { top: auto; bottom: 10vh; padding-bottom: 24px; }
   .beat--right {
     top: auto; bottom: 10vh; padding-bottom: 24px; text-align: left; align-items: flex-start;
@@ -468,12 +472,13 @@ html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
   .film__canvas, .film__loader { display: none; }
   .film__poster { position: relative; height: 100vh; }
 
-  .beat, #beat1, #beat2, #beat3, #beatEnd { opacity: 1; visibility: visible; }
+  /* Beats are ordinary flowed copy here, so pointer events come back on
+     (selecting/clicking text must work in the static page) */
+  .beat, #beat1, #beat2, #beat3, #beatEnd { opacity: 1; visibility: visible; pointer-events: auto; }
   .beat--left, .beat--right, .beat--end {
     position: relative; inset: auto; transform: none; text-align: left;
     max-width: 640px; margin: 48px auto; padding: 0 24px;
   }
-  .beat--title { position: absolute; inset: 0; }
   .scroll-cue { display: none; }
 
   /* Teardown: static spread is impossible without JS positioning, so show
@@ -578,7 +583,7 @@ html.no-js .reveal, html.reduced-motion .reveal { opacity: 1; }
             </defs>
             <path fill-rule="evenodd" fill="url(#gFrame)" stroke="#20242b" stroke-width="1.5"
               d="M50,4 h200 a46,46 0 0 1 46,46 v540 a46,46 0 0 1 -46,46 h-200 a46,46 0 0 1 -46,-46 v-540 a46,46 0 0 1 46,-46 Z
-                 M52,22 h196 a30,30 0 0 1 30,30 v536 a30,30 0 0 1 -30,30 h-196 a30,30 0 0 1 -30,-30 v-536 a30,30 0 0 1 30,-30 Z" transform="translate(0,-9)"/>
+                 M52,22 h196 a30,30 0 0 1 30,30 v536 a30,30 0 0 1 -30,30 h-196 a30,30 0 0 1 -30,-30 v-536 a30,30 0 0 1 30,-30 Z"/>
             <rect x="2"  y="150" width="6" height="52" rx="3" fill="#9aa3b2"/>
             <rect x="292" y="130" width="6" height="40" rx="3" fill="#9aa3b2"/>
             <rect x="292" y="190" width="6" height="72" rx="3" fill="#9aa3b2"/>
@@ -883,7 +888,10 @@ ScrollTrigger.create({
   invalidateOnRefresh: true,
   onUpdate: (self) => {
     setProgress(self.progress);
-    topbarEl.classList.toggle('topbar--scrolled', self.scroll() > 80);
+    /* Reduced-motion keeps the solid topbar unconditionally — without the
+       REDUCED short-circuit this toggle would strip the class again on the
+       first scroll event above the 80px threshold. */
+    topbarEl.classList.toggle('topbar--scrolled', REDUCED || self.scroll() > 80);
   },
 });
 if (REDUCED) topbarEl.classList.add('topbar--scrolled');
@@ -987,14 +995,17 @@ const SLOTS = {
     back:    { x: 30.5,  y: 0 },
   },
   mobile: {
+    /* Strict left/right zigzag with a 16vh same-column step: a phone layer
+       is ~21vh tall here, so 16vh keeps the cascading-overlap look without
+       any two same-column parts interpenetrating. */
     glass:   { x: -9,  y: -28 },
     oled:    { x: 9,   y: -20 },
     vapor:   { x: -9,  y: -12 },
     board:   { x: 9,   y: -4 },
-    camera:  { x: -13, y: 0 },
-    battery: { x: 9,   y: 4 },
-    frame:   { x: -9,  y: 12 },
-    back:    { x: 9,   y: 20 },
+    camera:  { x: -13, y: 4 },
+    battery: { x: 9,   y: 12 },
+    frame:   { x: -9,  y: 20 },
+    back:    { x: 9,   y: 28 },
   },
 };
 
