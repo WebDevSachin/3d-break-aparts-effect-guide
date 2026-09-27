@@ -247,6 +247,22 @@ un-inlined).
 7. Semantic landmarks, real alt text, visible focus, ≥ 4.5:1 body contrast.
 8. Scrub timelines use `ease: 'none'` — scroll position owns the pacing.
 
+## Project skills (Claude Code)
+
+`.claude/skills/` holds project skills that Claude Code picks up
+automatically when working in this repo — ask Claude to "deploy the site"
+or "add payments" and it follows these playbooks instead of improvising:
+
+| Skill | What it does |
+|---|---|
+| [`deploy-hostinger`](.claude/skills/deploy-hostinger/SKILL.md) | Ships `site/` to Hostinger: hPanel Git auto-deploy via a `hostinger-deploy` subtree branch (`scripts/make-deploy-branch.sh`), or an FTPS mirror (`scripts/deploy-ftp.sh`, env-var credentials, `--dry-run`). Includes cache-header `.htaccess` and a post-deploy validation checklist that reuses `scripts/verify.mjs` against the live URL. |
+| [`razorpay-setup`](.claude/skills/razorpay-setup/SKILL.md) | Adds Razorpay payments: the no-backend Payment Button (drop-in section snippet styled for this page), Payment Links, or the full Standard Checkout server flow (orders, HMAC signature verification, webhooks) — with test-mode-first steps and hard rules on which credentials may ever appear in client code. |
+
+Both skills are documentation-plus-tooling: no credentials live in the
+repo (`.env.deploy` is gitignored; Razorpay secrets stay in server env
+vars), and each ends with a validation checklist rather than a hopeful
+"done".
+
 ## Disclaimer
 
 The PHONEX ULTRA is not a real product; all product footage is AI-generated.

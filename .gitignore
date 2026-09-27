@@ -2,3 +2,6 @@ node_modules/
 /screenshots/
 package-lock.json
 .DS_Store
+
+# deploy credentials (deploy-hostinger skill) — never commit
+.env.deploy
